@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.api.router import api_router
 
-@app.get("/")
-def root():
-    return {"message": "Forecastle backend running 🚀"}
+app=FastAPI()
+app.include_router(api_router)
