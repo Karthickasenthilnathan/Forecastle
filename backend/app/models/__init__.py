@@ -5,3 +5,6 @@ class Base(DeclarativeBase):
 
 from .product import Product
 from .sales import Sales
+from .signal import Signal
+from .forecast import Forecast
+from .alert import AlertConfig, AlertHistory

@@ -1,10 +1,18 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, Integer
-from app.models import Base    # THIS is the key
+from sqlalchemy import Column, Integer, String, DateTime
+from datetime import datetime
+
+from app.models import Base
+
 
 class Product(Base):
     __tablename__ = "products"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String)
-    sku: Mapped[str] = mapped_column(String)
+    id = Column(Integer, primary_key=True, index=True)
+    sku = Column(String(50), unique=True, nullable=False)
+    name = Column(String(255), nullable=False)
+
+    # NEW FIELDS 
+    category = Column(String(100), nullable=True)
+    unit = Column(String(20), default="units")
+
+    created_at = Column(DateTime, default=datetime.utcnow)
