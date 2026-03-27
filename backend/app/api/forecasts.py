@@ -1,25 +1,26 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
 
-from app.db.session import get_db
-from app.schemas.forecast import ForecastRequest
-from app.services.forecast_service import generate_mock_forecast
+
+from app.ml.pipeline import generate_forecast
 
 
 router = APIRouter(prefix="/forecasts", tags=["Forecasts"])
 
 
-@router.get("/{product_id}")
-async def get_forecast(product_id: int, db: AsyncSession = Depends(get_db)):
-    return await generate_mock_forecast(product_id, db)
+@router.post("/generate")
+async def generate(product_id: int, horizon_weeks: int = 4):
+    result = await generate_forecast(product_id, horizon_weeks)
 
-
-@router.post("/")
-async def generate_forecast_api(
-    request: ForecastRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Generate forecast based on request payload
-    """
-    return await generate_mock_forecast(request.product_id, db)
+    return {
+        "product_id": product_id,
+        "horizon_weeks": horizon_weeks,
+        "predictions": result["predictions"],
+        "signal_contribution": result["features"],
+        "explanation": "Forecast adjusted using external signals"
+    }
+@router.get("/{product_id}/history")
+async def forecast_history(product_id: int):
+    return {"product_id": product_id, "history": []}
+@router.post("/{forecast_id}/override")
+async def override_forecast(forecast_id: int):
+    return {"message": f"Override for forecast {forecast_id}"}
