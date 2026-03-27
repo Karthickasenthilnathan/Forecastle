@@ -1,35 +1,48 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-from app.models import Base
+import asyncio
+import pandas as pd
+from datetime import datetime
+
+from app.db.session import AsyncSessionLocal
 from app.models.product import Product
 from app.models.sales import Sales
-from datetime import date
 
-DATABASE_URL = "postgresql://pulseflow:pulseflow_dev@localhost:5432/pulseflow"
 
-engine = create_engine(DATABASE_URL)
+async def seed():
+    async with AsyncSessionLocal() as db:
 
-def seed():
-    with Session(engine) as session:
-        # Create product
-        product = Product(
-            name="iPhone 15",
-            sku="IPHONE15"
-        )
-        session.add(product)
-        session.commit()
-
-        # Add sales data
-        sales_data = [
-            Sales(product_id=product.id, date=date(2024, 1, 1), quantity=100),
-            Sales(product_id=product.id, date=date(2024, 1, 2), quantity=120),
-            Sales(product_id=product.id, date=date(2024, 1, 3), quantity=90),
+        # 🔹 Create products
+        products = [
+            Product(sku="P001", name="Product 1", category="Electronics"),
+            Product(sku="P002", name="Product 2", category="Clothing"),
+            Product(sku="P003", name="Product 3", category="Food"),
+            Product(sku="P004", name="Product 4", category="Furniture"),
+            Product(sku="P005", name="Product 5", category="Sports"),
         ]
 
-        session.add_all(sales_data)
-        session.commit()
+        db.add_all(products)
+        await db.commit()
 
-        print("✅ Seed data inserted!")
+        # 🔹 Load CSV
+        df = pd.read_csv("synthetic_sales.csv")
+
+        sales_data = []
+
+        for _, row in df.iterrows():
+            sales_data.append(
+                Sales(
+                    product_id=int(row["product_id"]),
+                    date=pd.to_datetime(row["date"]).date(),
+                    quantity=int(row["quantity"]),
+                    revenue=float(row["quantity"] * 10),
+                    channel="online",
+                )
+            )
+
+        db.add_all(sales_data)
+        await db.commit()
+
+        print("✅ Seeding completed!")
+
 
 if __name__ == "__main__":
-    seed()
+    asyncio.run(seed())
