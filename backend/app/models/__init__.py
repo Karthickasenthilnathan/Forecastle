@@ -8,3 +8,4 @@ from .sales import Sales
 from .signal import Signal
 from .forecast import Forecast
 from .alert import AlertConfig, AlertHistory
+from .model_registry import ModelRegistry

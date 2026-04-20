@@ -9,7 +9,7 @@ class ProductBase(BaseModel):
     sku:str
     category:Optional[str]=None
     unit:Optional[str]="units"
-class ProductCreate(BaseModel):
+class ProductCreate(ProductBase):
     pass
 class ProductResponse(ProductBase):
     id:int
