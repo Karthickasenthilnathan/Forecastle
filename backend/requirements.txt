@@ -1,15 +1,29 @@
 fastapi
-uvicorn
+uvicorn[standard]
+
+# DB
 sqlalchemy
 asyncpg
+psycopg2-binary
+alembic
+
+# Config
+pydantic
 pydantic-settings
 python-dotenv
-alembic
-psycopg2-binary
+
+# ML
 pandas
 numpy
 scikit-learn
 prophet
+xgboost
 joblib
+
+# Async / tasks
 celery
 redis
+
+# Optional but recommended (used indirectly)
+matplotlib
+cmdstanpy
