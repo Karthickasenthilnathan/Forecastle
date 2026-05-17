@@ -49,13 +49,38 @@ async def get_latest_forecast(
     if not forecast:
         return {"error": f"No forecast found for product {product_id} at {horizon}W horizon"}
 
+    series_result = await session.execute(
+        select(Forecast)
+        .where(
+            Forecast.product_id == product_id,
+            Forecast.horizon_weeks == horizon,
+            Forecast.generated_at == forecast.generated_at,
+        )
+        .order_by(Forecast.forecast_date.asc())
+    )
+    forecasts = series_result.scalars().all()
+
     return {
+        "forecast_id": forecast.id,
         "product_id": product_id,
         "horizon_weeks": forecast.horizon_weeks,
-        "forecast_date": str(forecast.forecast_date),
-        "predicted_qty": forecast.predicted_qty,
-        "lower_bound": forecast.lower_bound,
-        "upper_bound": forecast.upper_bound,
+        "predictions": [
+            {
+                "id": item.id,
+                "date": str(item.forecast_date),
+                "qty": item.override_qty if item.is_override and item.override_qty else item.predicted_qty,
+                "predicted_qty": item.predicted_qty,
+                "lower": item.lower_bound,
+                "upper": item.upper_bound,
+                "lower_bound": item.lower_bound,
+                "upper_bound": item.upper_bound,
+            }
+            for item in forecasts
+        ],
+        "predicted_qty": sum(
+            item.override_qty if item.is_override and item.override_qty else item.predicted_qty
+            for item in forecasts
+        ),
         "confidence": forecast.confidence,
         "explanation": forecast.explanation,
         "signal_contributions": forecast.signal_contributions,

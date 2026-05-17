@@ -13,7 +13,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 @router.get("/", response_model=list[ProductResponse])
 async def get_products(db: AsyncSession = Depends(get_db)):
     """List all products."""
-    result = await db.execute(select(Product))
+    result = await db.execute(select(Product).order_by(Product.id.asc()))
     return result.scalars().all()
 
 

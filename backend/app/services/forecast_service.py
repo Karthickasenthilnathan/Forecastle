@@ -1,58 +1,52 @@
 from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ml.pipeline import run_pipeline   # ✅ MISSING IMPORT
-from app.services.explanation_service import generate_explanation
 from app.models.forecast import Forecast
+from app.services.explanation_service import generate_explanation
 
 
-async def generate_forecast(
-    product_id: int,
-    horizon: int,
-    session: AsyncSession
-):
-    # 1. Run ML pipeline
+async def generate_forecast(product_id: int, horizon: int, session: AsyncSession):
+    from app.ml.pipeline import run_pipeline
+
     result = await run_pipeline(product_id, horizon)
 
-    # ✅ SAFETY: avoid KeyError crashes
     predictions = result.get("predictions", [])
     features = result.get("features", {})
     confidence = result.get("confidence", 0.8)
-
-    # 2. Generate explanation
     explanation = generate_explanation(features)
+    generated_at = datetime.utcnow()
 
     saved_forecasts = []
 
-    # 3. Save each prediction
     for pred in predictions:
+        predicted_qty = pred.get("yhat", pred.get("predicted_qty", pred.get("qty")))
+        lower_bound = pred.get("yhat_lower", pred.get("lower_bound", pred.get("lower")))
+        upper_bound = pred.get("yhat_upper", pred.get("upper_bound", pred.get("upper")))
+
         forecast = Forecast(
             product_id=product_id,
-
-            # ✅ safer key access (prevents crashes if keys differ)
             forecast_date=pred.get("date"),
             horizon_weeks=horizon,
-            predicted_qty=pred.get("yhat"),
-            lower_bound=pred.get("yhat_lower"),
-            upper_bound=pred.get("yhat_upper"),
-
+            predicted_qty=predicted_qty,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
             confidence=confidence,
             model_version="v1",
             explanation=explanation,
             signal_contributions=features,
-            generated_at=datetime.utcnow()
+            generated_at=generated_at,
         )
 
         session.add(forecast)
         saved_forecasts.append(forecast)
 
-    # ✅ commit once after loop (good practice)
     await session.commit()
 
-    # 4. Return response
     return {
         "predictions": predictions,
         "explanation": explanation,
         "signal_contributions": features,
-        "confidence": confidence
+        "confidence": confidence,
+        "forecast_id": saved_forecasts[0].id if saved_forecasts else None,
     }
