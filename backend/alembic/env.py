@@ -7,9 +7,15 @@ import app.models.product
 import app.models.sales
 
 from app.models import Base
+from app.config import settings
 
 # Alembic Config
 config = context.config
+
+# Override sqlalchemy.url with the environment variable
+# Alembic runs synchronously, so we must remove the asyncpg driver prefix
+sync_db_url = settings.DATABASE_URL.replace("+asyncpg", "")
+config.set_main_option("sqlalchemy.url", sync_db_url)
 
 # Logging
 if config.config_file_name is not None:
