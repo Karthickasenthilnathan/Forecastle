@@ -204,6 +204,4 @@ The demo seed flow loads products, synthetic sales rows, external signal example
 
 Forecastle is a working prototype intended for local development and demo workflows. Production hardening areas include authentication, durable model registry workflows, full test coverage, deployment manifests, and real external signal integrations.
 
-## License
 
-No license has been specified yet.
